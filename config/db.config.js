@@ -13,6 +13,12 @@ module.exports = {
             version: "/api/v1",
             apiType: "/admin",
             status: true
+        }, 
+        {
+            routes: "project",
+            version: "/api/v1",
+            apiType: "/project",
+            status: true
         }
     ]
 }

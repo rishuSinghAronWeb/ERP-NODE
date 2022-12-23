@@ -25,11 +25,14 @@ router.post('/register', userController.register);
 router.post('/login', userController.login);
 router.post('/changePassword',middleWare.validateUser, userController.changePassword);
 
-router.post('/createProject',upload.array('photos', 12),middleWare.validateUser, userController.createProject);
-router.post('/addTeam',middleWare.validateUser, userController.addTeam);
-router.post('/getUserProjects',middleWare.validateUser, userController.getUserProjects);
-router.post('/addTaskUpdate',upload.array('photos', 12), middleWare.validateUser, userController.addTaskUpdate);
-router.post('/project',middleWare.validateUser, userController.getProject);
+router.post('/checkInAttendance',middleWare.validateUser, userController.checkInAttendance);
+router.post('/checkOutAttendance',middleWare.validateUser, userController.checkOutAttendance);
+router.post('/attendances',middleWare.validateUser, userController.getAttendances);
+
+router.post('/createTeam',middleWare.validateUser, userController.createTeam);
+router.get('/teams',middleWare.validateUser, userController.getAllTeams);
+router.post('/updateTeam',middleWare.validateUser, userController.updateTeam);
+router.post('/deleteTeam',middleWare.validateUser, userController.deleteTeam);
 
 // Retrieve a single user with iduserController
 router.get('/',middleWare.validateUser, userController.findOne);

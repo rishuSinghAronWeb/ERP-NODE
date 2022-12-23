@@ -1,6 +1,8 @@
 const User = require('../models/user');
 const Project = require('../models/project');
 const ProjectUpdate = require('../models/projectUpdate');
+const Attendance = require('../models/attendance');
+const Team = require('../models/team');
 const { successResponse, errorResponse, jwtToken, successResponseWithCount, validateData } = require('../helper/helper');
 
 exports.findAll = async (req, res) => {
@@ -70,6 +72,7 @@ exports.register = async (req, res) => {
             token: newTYoken,
             name: req.body.name,
             password: hashedPassword,
+            team: req.body.team,
             email: req.body.email,
             phone: req.body.phone,
             role: req.body.role,
@@ -320,6 +323,207 @@ exports.getProject = async (req, res) => {
                 projectUpdatesCount: userCount[0] && userCount[0].myCount || 0
             }
             return (successResponse(res, "Project Find Success", allData))
+        }
+    })
+};
+
+// Delete a User with the specified id in the request
+exports.checkInAttendance = async (req, res) => {
+    let data = req.body
+    let validity = validateData(['userId'], data)
+    if (validity && validity.error) {
+        return (errorResponse(res, validity.msg))
+    }
+    let userExist = await User.findOne({ _id: req.body.userId })
+    if (!userExist) {
+        return (errorResponse(res, "User Not exist."))
+    }
+    let todatyData = new Date()
+    const getDate = todatyData.getDate()
+    const getMonth = todatyData.getMonth()
+    const getFullYear = todatyData.getFullYear()
+    const toDay = `${getDate}/${getMonth}/${getFullYear}`
+    let findQuerry = {
+        user: data.userId,
+        date: toDay
+    }
+    let updateQuerry = {
+        cretatedBy: req.decode._id,
+        user: data.userId,
+        checkInTime: todatyData,
+        date: toDay,
+        status: true
+    }
+    Attendance.findOneAndUpdate(findQuerry, updateQuerry, {new : true, upsert: true },async function (err, result) {
+        if (err) {
+            return (errorResponse(res, err.message || "Something went wrong while Update team Member."))
+        }
+        if (result) {
+            return (successResponse(res, "Check In Success", result))
+        }
+    })
+};
+
+// Delete a User with the specified id in the request
+exports.getAttendances = async (req, res) => {
+    let data = req.body
+    let validity = validateData(['userId'], data)
+    if (validity && validity.error) {
+        return (errorResponse(res, validity.msg))
+    }
+    let userExist = await User.findOne({ _id: req.body.userId })
+    if (!userExist) {
+        return (errorResponse(res, "User Not exist."))
+    }
+    let findQuerry = {
+        user: data.userId
+    }
+    Attendance.find(findQuerry,async function (err, result) {
+        if (err) {
+            return (errorResponse(res, err.message || "Something went wrong while Update team Member."))
+        }
+        if (result) {
+            return (successResponse(res, "Attendances In Success", result))
+        }
+    })
+};
+
+// Delete a User with the specified id in the request
+exports.checkOutAttendance = async (req, res) => {
+    let data = req.body
+    let validity = validateData(['userId'], data)
+    if (validity && validity.error) {
+        return (errorResponse(res, validity.msg))
+    }
+    let userExist = await User.findOne({ _id: req.body.userId })
+    if (!userExist) {
+        return (errorResponse(res, "User Not exist."))
+    }
+    let todatyData = new Date()
+    const getDate = todatyData.getDate()
+    const getMonth = todatyData.getMonth()
+    const getFullYear = todatyData.getFullYear()
+    const toDay = `${getDate}/${getMonth}/${getFullYear}`
+    let findQuerry = {
+        user: data.userId,
+        date: toDay
+    }
+    let attachementExist = await Attendance.findOne(findQuerry)
+    if(!attachementExist){
+        return (errorResponse(res, "Chack In first."))
+    }
+    const seconds = Math.floor((new Date(todatyData).getTime() - new Date(attachementExist.checkInTime).getTime()) / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = minutes/60;
+    let minutesOnly = 0
+    let hourlyOnly = 0
+    if(minutes > 0){
+        let alldata = hours.toString().split(".")
+        hourlyOnly = alldata[0]
+        minutesOnly = Math.floor(alldata[1] * 60)
+    }
+    let updateQuerry = {
+        cretatedBy: req.decode._id,
+        user: data.userId,
+        checkOutTime: todatyData,
+        date: toDay,
+        totalHr: hourlyOnly,
+        totalMin: minutesOnly.toString().slice(0, 2),
+        status: data.status || true
+    }
+    if(req.body.extraLeave){
+        updateQuerry.extraLeave = req.body.extraLeave
+    }
+    Attendance.findOneAndUpdate(findQuerry, updateQuerry, {new : true, upsert: true },async function (err, result) {
+        if (err) {
+            return (errorResponse(res, err.message || "Something went wrong while Update team Member."))
+        }
+        if (result) {
+            return (successResponse(res, "Check In Success", result))
+        }
+    })
+};
+
+// Delete a User with the specified id in the request
+exports.updateTeam = async (req, res) => {
+    let data = req.body
+    let validity = validateData(['name', 'teamId'], data)
+    if (validity && validity.error) {
+        return (errorResponse(res, validity.msg))
+    }
+    let teamExist = await Team.findOne({_id: req.body.teamId})
+    if(!teamExist){
+        return (errorResponse(res, "Team Not Exist."))
+    }
+    let findQuerry = {
+        _id: req.body.teamId
+    }
+    let updateQuerry = {
+        name: data.name
+    }
+    Team.findOneAndUpdate(findQuerry, updateQuerry, {new : true, upsert: true },async function (err, result) {
+        if (err) {
+            return (errorResponse(res, err.message || "Something went wrong while Update team Member."))
+        }
+        if (result) {
+            return (successResponse(res, "Team Create Success", result))
+        }
+    })
+};
+
+// Delete a User with the specified id in the request
+exports.getAllTeams = async (req, res) => {
+    Team.find({},async function (err, result) {
+        if (err) {
+            return (errorResponse(res, err.message || "Something went wrong while Update team Member."))
+        }
+        if (result) {
+            return (successResponse(res, "Get Team Success", result))
+        }
+    })
+};
+// Delete a User with the specified id in the request
+exports.createTeam = async (req, res) => {
+    let data = req.body
+    let validity = validateData(['name'], data)
+    if (validity && validity.error) {
+        return (errorResponse(res, validity.msg))
+    }
+    let findQuerry = {
+        name: data.name
+    }
+    let updateQuerry = {
+        name: data.name,
+        cretatedBy: req.decode._id,
+        status: true
+    }
+    Team.findOneAndUpdate(findQuerry, updateQuerry, {new : true, upsert: true },async function (err, result) {
+        if (err) {
+            return (errorResponse(res, err.message || "Something went wrong while Update team Member."))
+        }
+        if (result) {
+            return (successResponse(res, "Team Create Success", result))
+        }
+    })
+};
+
+// Delete a User with the specified id in the request
+exports.deleteTeam = async (req, res) => {
+    let data = req.body
+    let validity = validateData(['teamId'], data)
+    if (validity && validity.error) {
+        return (errorResponse(res, validity.msg))
+    }
+    let teamExist = await Team.findOne({_id: req.body.teamId})
+    if(!teamExist){
+        return (errorResponse(res, "Team Not Exist."))
+    }
+    Team.remove({_id: req.body.teamId}, async function (err, result) {
+        if (err) {
+            return (errorResponse(res, err.message || "Something went wrong while Update team Member."))
+        }
+        if (result) {
+            return (successResponse(res, "Team Delete Success", result))
         }
     })
 };
