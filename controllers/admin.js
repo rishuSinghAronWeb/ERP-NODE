@@ -20,10 +20,10 @@ exports.findAll = async (req, res) => {
     ]).then(users => {
         return (successResponseWithCount(res, "User All Data", users, userCount[0].myCount))
     }).catch(err => {
+        console.log("err ====> ",err)
         return (errorResponse(res, err.message || "Something went wrong while getting list of users."))
     });
 };
-
 // Create and Save a new User
 exports.login = async (req, res) => {
     try {
