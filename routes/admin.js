@@ -5,19 +5,21 @@ const userController = require('../controllers/admin');
 const middleWare = require('../helper/middleware');
 
 // Retrieve all users
-router.post('/all', middleWare.validateUser, userController.findAll);
+router.post('/all', middleWare.validateAdmin, userController.findAll);
 
 // Create a new user
 router.post('/register', userController.register);
 router.post('/login', userController.login);
-router.post('/changePassword',middleWare.validateUser, userController.changePassword);
+router.post('/changePassword',middleWare.validateAdmin, userController.changePassword);
+router.get('/',middleWare.validateAdmin, userController.findOne);
+router.post('/delete',middleWare.validateAdmin , userController.delete);
 
-router.post('/createProject',middleWare.validateUser, userController.createProject);
+router.post('/createProject',middleWare.validateAdmin, userController.createProject);
 
-// Retrieve a single user with iduserController
-router.get('/',middleWare.validateUser, userController.findOne);
+router.post('/createTeam',middleWare.validateAdmin, userController.createTeam);
+router.get('/teams',middleWare.validateAdmin, userController.getAllTeams);
+router.post('/updateTeam',middleWare.validateAdmin, userController.updateTeam);
+router.post('/deleteTeam',middleWare.validateAdmin, userController.deleteTeam);
 
-// Delete a user with id
-router.post('/delete',middleWare.validateUser , userController.delete);
 
 module.exports = router

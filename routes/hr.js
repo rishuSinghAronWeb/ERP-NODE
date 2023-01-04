@@ -14,13 +14,16 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage })
 
 
-const userController = require('../controllers/admin');
+const hrController = require('../controllers/hr');
 const middleWare = require('../helper/middleware');
 
-router.post('/createProject',upload.array('photos', 12),middleWare.validateUser, userController.createProject);
-router.post('/addTeam',middleWare.validateUser, userController.addTeam);
-router.post('/getUserProjects',middleWare.validateUser, userController.getUserProjects);
-router.post('/addTaskUpdate',upload.array('photos', 12), middleWare.validateUser, userController.addTaskUpdate);
-router.post('/projectdetails',middleWare.validateUser, userController.getProject);
+router.post('/register', hrController.register);
+router.post('/login', hrController.login);
+router.post('/getUserProjects',middleWare.validateHr, hrController.getUserProjects);
+router.post('/addTaskUpdate',upload.array('photos', 12), middleWare.validateUser, hrController.addTaskUpdate);
+router.post('/projectdetails',middleWare.validateHr, hrController.getProject);
+
+router.post('/approveLeaved',middleWare.validateHr, hrController.approveLeaved);
+
 
 module.exports = router

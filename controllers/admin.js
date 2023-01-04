@@ -248,7 +248,7 @@ exports.getUserProjects = async (req, res) => {
     Project.aggregate([
         { $match: { team: { $in: [req.decode._id] } } },
         { $skip: ((Number(data.page) - 1) * Number(data.size)) },
-        { $limit: [Number(data.size)] },
+        { $limit: Number(data.size) },
         { $sort: { [`${data.shortBy}`]: Number(data.order) } }
     ]).then(users => {
         return (successResponseWithCount(res, "User All Data", users, userCount[0] && userCount[0].myCount || 0))

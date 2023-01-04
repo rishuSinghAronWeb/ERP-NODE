@@ -13,31 +13,27 @@ const storage = multer.diskStorage({
   })
 const upload = multer({ storage: storage })
 
-
-const userController = require('../controllers/admin');
+const userController = require('../controllers/user');
 const middleWare = require('../helper/middleware');
 
 // Retrieve all users
 router.post('/all', middleWare.validateUser, userController.findAll);
-
 // Create a new user
-router.post('/register', userController.register);
+router.post('/register', upload.single('image'), userController.register);
 router.post('/login', userController.login);
 router.post('/changePassword',middleWare.validateUser, userController.changePassword);
+
+router.post('/delete',middleWare.validateUser , userController.delete);
 
 router.post('/checkInAttendance',middleWare.validateUser, userController.checkInAttendance);
 router.post('/checkOutAttendance',middleWare.validateUser, userController.checkOutAttendance);
 router.post('/attendances',middleWare.validateUser, userController.getAttendances);
 
-router.post('/createTeam',middleWare.validateUser, userController.createTeam);
-router.get('/teams',middleWare.validateUser, userController.getAllTeams);
-router.post('/updateTeam',middleWare.validateUser, userController.updateTeam);
-router.post('/deleteTeam',middleWare.validateUser, userController.deleteTeam);
+// common
 
-// Retrieve a single user with iduserController
-router.get('/',middleWare.validateUser, userController.findOne);
-
-// Delete a user with id
-router.post('/delete',middleWare.validateUser , userController.delete);
+router.get('/',middleWare.commanAuth, userController.findOne);
+router.post('/requestLeave',middleWare.commanAuth, userController.requestLeave);
+router.post('/checkLeave',middleWare.commanAuth, userController.checkLeaveStatus);
+router.post('/updateImage', middleWare.commanAuth, upload.single('image'), userController.updateProfileImage);
 
 module.exports = router

@@ -19,6 +19,18 @@ module.exports = {
             version: "/api/v1",
             apiType: "/project",
             status: true
+        }, 
+        {
+            routes: "hr",
+            version: "/api/v1",
+            apiType: "/hr",
+            status: true
+        }, 
+        {
+            routes: "projectManager",
+            version: "/api/v1",
+            apiType: "/projectManager",
+            status: true
         }
     ]
 }
