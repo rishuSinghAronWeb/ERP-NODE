@@ -18,6 +18,30 @@ mongoose.Promise = global.Promise;
 const http = require('http').createServer(app); //ajeet
 // inside public directory.
 app.use('/image', express.static(__dirname + '/uploads'));
+
+app.get('/', function(req,res){
+  console.log(req.body)
+  console.log(req.params)
+
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>`
+  xml += `<user>`
+  for (let i = 0; i < 99; i++) {
+    xml += `
+    <customer> 
+        <firstName>Henry</firstName>
+        <lastName>William</lastName>
+    </customer>`
+  }
+  xml += `</user>`
+  res.header('Content-Type', 'application/xml')
+  res.status(200).send(xml)
+});
+app.post('/', function(req,res){
+  console.log(req.params)
+  console.log(req.body)
+  res.send({sucess: true})
+});
+
 //all socket
 require('./socket')(http, app); 
 
