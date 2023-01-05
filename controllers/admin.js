@@ -3,6 +3,8 @@ const Project = require('../models/project');
 const ProjectUpdate = require('../models/projectUpdate');
 const Attendance = require('../models/attendance');
 const Team = require('../models/team');
+const upload = require('../helper/awsimageupload');
+const ImageUpload = upload.any();
 const { successResponse, errorResponse, jwtToken, successResponseWithCount, validateData } = require('../helper/helper');
 
 exports.findAll = async (req, res) => {
@@ -20,7 +22,7 @@ exports.findAll = async (req, res) => {
     ]).then(users => {
         return (successResponseWithCount(res, "User All Data", users, userCount[0].myCount))
     }).catch(err => {
-        console.log("err ====> ",err)
+        console.log("err ====> ", err)
         return (errorResponse(res, err.message || "Something went wrong while getting list of users."))
     });
 };
@@ -162,36 +164,41 @@ exports.delete = (req, res) => {
 
 // Delete a User with the specified id in the request
 exports.createProject = async (req, res) => {
-    console.log("req.decode ===> ", req.decode)
-    console.log("req.files ===> ", req.files)
-    let validity = validateData(['name', 'title', 'discription', 'deadLine'], req.body)
-    if (validity && validity.error) {
-        return (errorResponse(res, validity.msg))
-    }
-    let attachements = []
-    if(req.files && req.files.length > 0){
-        for(let i = 0; i<req.files.length; i++){
-            attachements.push(`localhost:4000/image/${req.files[i].filename}`)
+    ImageUpload(req, res, async function (err, resp) {
+        if (err) {
+            return console.log('errrrr', err)
         }
-    }
-    // Create a new User
-    const project = new Project({
-        name: req.body.name,
-        title: req.body.title,
-        attachement: attachements,
-        discription: req.body.discription,
-        text: req.body.text,
-        cretatedBy: req.decode._id,
-        deadLine: req.body.name,
-        status: true
-    });
-    // Save user in the database
-    project.save()
-        .then(data => {
-            return (successResponse(res, "Project Create Success", data))
-        }).catch(err => {
-            return (errorResponse(res, err.message || "Something went wrong while creating new Project."))
+        console.log("req.decode ===> ", req.decode)
+        console.log("req.files ===> ", req.files)
+        let validity = validateData(['name', 'title', 'discription', 'deadLine'], req.body)
+        if (validity && validity.error) {
+            return (errorResponse(res, validity.msg))
+        }
+        let attachements = []
+        if (req.files && req.files.length > 0) {
+            for (let i = 0; i < req.files.length; i++) {
+                attachements.push(`localhost:4000/image/${req.files[i].location}`)
+            }
+        }
+        // Create a new User
+        const project = new Project({
+            name: req.body.name,
+            title: req.body.title,
+            attachement: attachements,
+            discription: req.body.discription,
+            text: req.body.text,
+            cretatedBy: req.decode._id,
+            deadLine: req.body.name,
+            status: true
         });
+        // Save user in the database
+        project.save()
+            .then(data => {
+                return (successResponse(res, "Project Create Success", data))
+            }).catch(err => {
+                return (errorResponse(res, err.message || "Something went wrong while creating new Project."))
+            });
+    })
 };
 
 
@@ -259,50 +266,55 @@ exports.getUserProjects = async (req, res) => {
 
 // Delete a User with the specified id in the request
 exports.addTaskUpdate = async (req, res) => {
-    let data = req.body
-    if (req.decode.role != "user") {
-        return (errorResponse(res, "Invalid Api."))
-    }
-    let validity = validateData(['massage', 'hours', 'minutes', 'projectId'], req.body)
-    if (validity && validity.error) {
-        return (errorResponse(res, validity.msg))
-    }
-    let attachements = []
-    console.log("req.files ===> ",req.files)
-    if(req.files && req.files.length > 0){
-        for(let i = 0; i<req.files.length; i++){
-            attachements.push(`localhost:4000/image/${req.files[i].filename}`)
+    ImageUpload(req, res, async function (err, resp) {
+        if (err) {
+            return console.log('errrrr', err)
         }
-    }
-    console.log("attachements ==> ",attachements)
-    // Create a new User
-    const projectUpdate = new ProjectUpdate({
-        massage: data.massage,
-        hours: data.hours,
-        minutes: data.minutes,
-        attachement: attachements,
-        status: true,
-        cretatedBy: req.decode._id,
-        projectId: data.projectId,
-        createdAt: new Date()
-    });
-    // Save user in the database
-    projectUpdate.save()
-        .then(data => {
-            return (successResponse(res, "Project Create Success", data))
-        }).catch(err => {
-            return (errorResponse(res, err.message || "Something went wrong while creating new Project."))
+        let data = req.body
+        if (req.decode.role != "user") {
+            return (errorResponse(res, "Invalid Api."))
+        }
+        let validity = validateData(['massage', 'hours', 'minutes', 'projectId'], req.body)
+        if (validity && validity.error) {
+            return (errorResponse(res, validity.msg))
+        }
+        let attachements = []
+        console.log("req.files ===> ", req.files)
+        if (req.files && req.files.length > 0) {
+            for (let i = 0; i < req.files.length; i++) {
+                attachements.push(`localhost:4000/image/${req.files[i].location}`)
+            }
+        }
+        console.log("attachements ==> ", attachements)
+        // Create a new User
+        const projectUpdate = new ProjectUpdate({
+            massage: data.massage,
+            hours: data.hours,
+            minutes: data.minutes,
+            attachement: attachements,
+            status: true,
+            cretatedBy: req.decode._id,
+            projectId: data.projectId,
+            createdAt: new Date()
         });
+        // Save user in the database
+        projectUpdate.save()
+            .then(data => {
+                return (successResponse(res, "Project Create Success", data))
+            }).catch(err => {
+                return (errorResponse(res, err.message || "Something went wrong while creating new Project."))
+            });
+    })
 };
 
 // Delete a User with the specified id in the request
 exports.getProject = async (req, res) => {
     let data = req.body
-    let validity = validateData(['projectId','shortBy', 'page', 'size', 'order'], data)
+    let validity = validateData(['projectId', 'shortBy', 'page', 'size', 'order'], data)
     if (validity && validity.error) {
         return (errorResponse(res, validity.msg))
     }
-    Project.findOne({ _id: data.projectId },async function (err, result) {
+    Project.findOne({ _id: data.projectId }, async function (err, result) {
         if (err) {
             return (errorResponse(res, err.message || "Something went wrong while Update team Member."))
         }
@@ -354,7 +366,7 @@ exports.checkInAttendance = async (req, res) => {
         date: toDay,
         status: true
     }
-    Attendance.findOneAndUpdate(findQuerry, updateQuerry, {new : true, upsert: true },async function (err, result) {
+    Attendance.findOneAndUpdate(findQuerry, updateQuerry, { new: true, upsert: true }, async function (err, result) {
         if (err) {
             return (errorResponse(res, err.message || "Something went wrong while Update team Member."))
         }
@@ -378,7 +390,7 @@ exports.getAttendances = async (req, res) => {
     let findQuerry = {
         user: data.userId
     }
-    Attendance.find(findQuerry,async function (err, result) {
+    Attendance.find(findQuerry, async function (err, result) {
         if (err) {
             return (errorResponse(res, err.message || "Something went wrong while Update team Member."))
         }
@@ -409,15 +421,15 @@ exports.checkOutAttendance = async (req, res) => {
         date: toDay
     }
     let attachementExist = await Attendance.findOne(findQuerry)
-    if(!attachementExist){
+    if (!attachementExist) {
         return (errorResponse(res, "Chack In first."))
     }
     const seconds = Math.floor((new Date(todatyData).getTime() - new Date(attachementExist.checkInTime).getTime()) / 1000);
     const minutes = Math.floor(seconds / 60);
-    const hours = minutes/60;
+    const hours = minutes / 60;
     let minutesOnly = 0
     let hourlyOnly = 0
-    if(minutes > 0){
+    if (minutes > 0) {
         let alldata = hours.toString().split(".")
         hourlyOnly = alldata[0]
         minutesOnly = Math.floor(alldata[1] * 60)
@@ -431,10 +443,10 @@ exports.checkOutAttendance = async (req, res) => {
         totalMin: minutesOnly.toString().slice(0, 2),
         status: data.status || true
     }
-    if(req.body.extraLeave){
+    if (req.body.extraLeave) {
         updateQuerry.extraLeave = req.body.extraLeave
     }
-    Attendance.findOneAndUpdate(findQuerry, updateQuerry, {new : true, upsert: true },async function (err, result) {
+    Attendance.findOneAndUpdate(findQuerry, updateQuerry, { new: true, upsert: true }, async function (err, result) {
         if (err) {
             return (errorResponse(res, err.message || "Something went wrong while Update team Member."))
         }
@@ -451,8 +463,8 @@ exports.updateTeam = async (req, res) => {
     if (validity && validity.error) {
         return (errorResponse(res, validity.msg))
     }
-    let teamExist = await Team.findOne({_id: req.body.teamId})
-    if(!teamExist){
+    let teamExist = await Team.findOne({ _id: req.body.teamId })
+    if (!teamExist) {
         return (errorResponse(res, "Team Not Exist."))
     }
     let findQuerry = {
@@ -461,7 +473,7 @@ exports.updateTeam = async (req, res) => {
     let updateQuerry = {
         name: data.name
     }
-    Team.findOneAndUpdate(findQuerry, updateQuerry, {new : true, upsert: true },async function (err, result) {
+    Team.findOneAndUpdate(findQuerry, updateQuerry, { new: true, upsert: true }, async function (err, result) {
         if (err) {
             return (errorResponse(res, err.message || "Something went wrong while Update team Member."))
         }
@@ -473,7 +485,7 @@ exports.updateTeam = async (req, res) => {
 
 // Delete a User with the specified id in the request
 exports.getAllTeams = async (req, res) => {
-    Team.find({},async function (err, result) {
+    Team.find({}, async function (err, result) {
         if (err) {
             return (errorResponse(res, err.message || "Something went wrong while Update team Member."))
         }
@@ -497,7 +509,7 @@ exports.createTeam = async (req, res) => {
         cretatedBy: req.decode._id,
         status: true
     }
-    Team.findOneAndUpdate(findQuerry, updateQuerry, {new : true, upsert: true },async function (err, result) {
+    Team.findOneAndUpdate(findQuerry, updateQuerry, { new: true, upsert: true }, async function (err, result) {
         if (err) {
             return (errorResponse(res, err.message || "Something went wrong while Update team Member."))
         }
@@ -514,11 +526,11 @@ exports.deleteTeam = async (req, res) => {
     if (validity && validity.error) {
         return (errorResponse(res, validity.msg))
     }
-    let teamExist = await Team.findOne({_id: req.body.teamId})
-    if(!teamExist){
+    let teamExist = await Team.findOne({ _id: req.body.teamId })
+    if (!teamExist) {
         return (errorResponse(res, "Team Not Exist."))
     }
-    Team.remove({_id: req.body.teamId}, async function (err, result) {
+    Team.remove({ _id: req.body.teamId }, async function (err, result) {
         if (err) {
             return (errorResponse(res, err.message || "Something went wrong while Update team Member."))
         }

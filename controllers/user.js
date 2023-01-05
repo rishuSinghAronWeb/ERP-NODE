@@ -2,6 +2,8 @@ const User = require('../models/user');
 const Project = require('../models/project');
 const Leave = require('../models/leaves');
 const Attendance = require('../models/attendance');
+const upload = require('../helper/awsimageupload');
+const ImageUpload = upload.single('image');
 const Team = require('../models/team');
 const { successResponse, errorResponse, jwtToken, successResponseWithCount, validateData } = require('../helper/helper');
 
@@ -58,45 +60,49 @@ exports.login = async (req, res) => {
 // Create and Save a new User
 exports.register = async (req, res) => {
     try {
-        console.log("req.file ==> ",req.file)
-
-        let validity = validateData(['name','employeId', 'password', 'email', 'phone', 'role'], req.body)
-        if (validity && validity.error) {
-            return (errorResponse(res, validity.msg))
-        }
-        let verifyEmail = await User.findOne({ email: req.body.email })
-        if (verifyEmail) {
-            return (errorResponse(res, "Email Already exist."))
-        }
-        let employeIdExist = await User.findOne({ employeId: req.body.employeId })
-        if (employeIdExist) {
-            return (errorResponse(res, "Employe Id Already exist."))
-        }
-        let image = null;
-        if(req.file) image= `http://localhost:4000/image/${req.file.filename}`
-        var hashedPassword = require('crypto').createHash('sha256').update(req.body.password).digest('hex');
-        let newTYoken = jwtToken(req.body.email)
-        // Create a new User
-        const user = new User({
-            employeId: req.body.employeId,
-            token: newTYoken,
-            name: req.body.name,
-            password: hashedPassword,
-            team: req.body.team,
-            email: req.body.email,
-            phone: req.body.phone,
-            role: req.body.role,
-            is_active: true,
-            is_verified: true,
-            is_deleted: false
-        });
-        // Save user in the database
-        user.save()
-            .then(data => {
-                return (successResponse(res, "User Create Success", data))
-            }).catch(err => {
-                return (errorResponse(res, err.message || "Something went wrong while creating new user."))
+        ImageUpload(req, res, async function (err, resp) {
+            if (err) {
+                return console.log('errrrr', err)
+            }
+            console.log("req.file ==> ", req.file)
+            let validity = validateData(['name', 'employeId', 'password', 'email', 'phone', 'role'], req.body)
+            if (validity && validity.error) {
+                return (errorResponse(res, validity.msg))
+            }
+            let verifyEmail = await User.findOne({ email: req.body.email })
+            if (verifyEmail) {
+                return (errorResponse(res, "Email Already exist."))
+            }
+            let employeIdExist = await User.findOne({ employeId: req.body.employeId })
+            if (employeIdExist) {
+                return (errorResponse(res, "Employe Id Already exist."))
+            }
+            let image = null;
+            if (req.file && req.file.location) image = req.file.location
+            var hashedPassword = require('crypto').createHash('sha256').update(req.body.password).digest('hex');
+            let newTYoken = jwtToken(req.body.email)
+            // Create a new User
+            const user = new User({
+                employeId: req.body.employeId,
+                token: newTYoken,
+                name: req.body.name,
+                password: hashedPassword,
+                team: req.body.team,
+                email: req.body.email,
+                phone: req.body.phone,
+                role: req.body.role,
+                is_active: true,
+                is_verified: true,
+                is_deleted: false
             });
+            // Save user in the database
+            user.save()
+                .then(data => {
+                    return (successResponse(res, "User Create Success", data))
+                }).catch(err => {
+                    return (errorResponse(res, err.message || "Something went wrong while creating new user."))
+                });
+        })
     } catch (e) {
         return (errorResponse(res, e || "Something went wrong while creating new user."))
     }
@@ -105,19 +111,24 @@ exports.register = async (req, res) => {
 // Create and Save a new User
 exports.updateProfileImage = async (req, res) => {
     try {
-        console.log("req.file ==> ",req.file)
-        if (!req.file) {
-            return (errorResponse(res, "Image Is require."))
-        }
-        let image = null;
-        if(req.file) image= `http://localhost:4000/image/${req.file.filename}`
-        User.findOneAndUpdate({ _id: req.decode._id }, { image: image }, { new: true }, function (err, result) {
+        ImageUpload(req, res, async function (err, resp) {
             if (err) {
-                return (errorResponse(res, err.message || "Something went wrong while updateing profile."))
+                return console.log('errrrr', err)
             }
-            if (result) {
-                return (successResponse(res, "Change profile Success", result))
+            console.log("req.file ==> ", req.file)
+            if (!req.file) {
+                return (errorResponse(res, "Image Is require."))
             }
+            let image = null;
+            if (req.file && req.file.location) image = req.file.location
+            User.findOneAndUpdate({ _id: req.decode._id }, { image: image }, { new: true }, function (err, result) {
+                if (err) {
+                    return (errorResponse(res, err.message || "Something went wrong while updateing profile."))
+                }
+                if (result) {
+                    return (successResponse(res, "Change profile Success", result))
+                }
+            })
         })
     } catch (e) {
         return (errorResponse(res, e || "Something went wrong while updateing profile."))
